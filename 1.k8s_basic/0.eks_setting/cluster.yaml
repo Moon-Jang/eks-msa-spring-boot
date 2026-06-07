@@ -1,0 +1,32 @@
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+
+metadata:
+  name: eks-practice
+  region: ap-northeast-2
+  version: "1.36"
+
+# Default VPC 재사용 (새 VPC 생성 안 함)
+vpc:
+  id: vpc-0688897dd5243ba9a
+  subnets:
+    public:
+      ap-northeast-2a: { id: subnet-0fa73068a3e5e271f }
+      ap-northeast-2b: { id: subnet-0b83509d7d8bd00fa }
+      ap-northeast-2c: { id: subnet-095cf9ddfbabf10e5 }
+      ap-northeast-2d: { id: subnet-0ffc8891e6bcc6523 }
+
+iam:
+  withOIDC: false
+  serviceRoleARN: arn:aws:iam::831926604059:role/AmazonEKSClusterRole
+
+managedNodeGroups:
+  - name: my-worker-node
+    instanceType: t3.small
+    minSize: 2
+    maxSize: 2
+    desiredCapacity: 2
+    volumeSize: 20
+    amiFamily: AmazonLinux2023
+    iam:
+      instanceRoleARN: arn:aws:iam::831926604059:role/AmazonEKSNodeRole
