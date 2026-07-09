@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>k8s 주요 요소 실습 · 객관식 20문항</title>
+<style>
+  :root {
+    --bg: #0f1420;
+    --card: #1a2130;
+    --card2: #212a3c;
+    --border: #2d3850;
+    --text: #e6ebf2;
+    --muted: #93a1b8;
+    --accent: #4f8cff;
+    --accent-soft: #23375e;
+    --ok: #34d399;
+    --ok-soft: #17372c;
+    --bad: #f87171;
+    --bad-soft: #3a1f22;
+    --shadow: 0 10px 30px rgba(0,0,0,.4);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans KR", sans-serif;
+    background: linear-gradient(180deg, #0c101a 0%, #0f1420 100%);
+    color: var(--text);
+    line-height: 1.6;
+    padding: 32px 16px 120px;
+  }
+  .wrap { max-width: 820px; margin: 0 auto; }
+  header.hero {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px 28px 24px;
+    margin-bottom: 24px;
+    box-shadow: var(--shadow);
+  }
+  header.hero h1 { margin: 0 0 8px; font-size: 22px; letter-spacing: -.3px; }
+  header.hero p { margin: 4px 0; color: var(--muted); font-size: 14px; }
+  .pill {
+    display: inline-block; background: var(--accent-soft); color: #bcd3ff;
+    border-radius: 999px; padding: 3px 12px; font-size: 12px; font-weight: 600;
+    margin-bottom: 12px;
+  }
+  .progress-bar { height: 6px; background: var(--card2); border-radius: 6px; overflow: hidden; margin-top: 16px; }
+  .progress-fill { height: 100%; width: 0%; background: linear-gradient(90deg,#4f8cff,#34d399); transition: width .3s ease; }
+  .q {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 22px 22px 18px;
+    margin-bottom: 16px;
+    box-shadow: var(--shadow);
+  }
+  .q .qhead { display: flex; gap: 10px; align-items: baseline; margin-bottom: 14px; }
+  .q .num { flex: 0 0 auto; font-weight: 700; color: var(--accent); font-size: 14px; }
+  .q .qtext { font-size: 16px; font-weight: 600; }
+  .q .topic { font-size: 11px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .5px; }
+  code { background: #0b1220; border: 1px solid var(--border); border-radius: 5px; padding: 1px 6px; font-size: 13px; color: #ffd58a; }
+  .opts { display: flex; flex-direction: column; gap: 8px; }
+  label.opt {
+    display: flex; gap: 11px; align-items: flex-start;
+    background: var(--card2); border: 1.5px solid var(--border);
+    border-radius: 10px; padding: 12px 14px; cursor: pointer;
+    transition: border-color .15s, background .15s;
+  }
+  label.opt:hover { border-color: var(--accent); }
+  label.opt input { margin-top: 3px; accent-color: var(--accent); flex: 0 0 auto; }
+  label.opt .otext { font-size: 14.5px; }
+  label.opt.correct { border-color: var(--ok); background: var(--ok-soft); }
+  label.opt.wrong { border-color: var(--bad); background: var(--bad-soft); }
+  .explain {
+    margin-top: 12px; font-size: 13.5px; color: var(--muted);
+    border-left: 3px solid var(--accent); padding: 8px 0 8px 12px;
+    background: #121a29; border-radius: 0 8px 8px 0; display: none;
+  }
+  .explain.show { display: block; }
+  .explain b { color: var(--text); }
+  .actionbar {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: rgba(15,20,32,.92); backdrop-filter: blur(8px);
+    border-top: 1px solid var(--border); padding: 14px 16px;
+    display: flex; justify-content: center; gap: 12px; align-items: center; z-index: 20;
+  }
+  .btn {
+    border: none; border-radius: 10px; padding: 12px 26px; font-size: 15px; font-weight: 700;
+    cursor: pointer; font-family: inherit;
+  }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: #6b9dff; }
+  .btn-ghost { background: var(--card2); color: var(--text); border: 1px solid var(--border); }
+  .btn-ghost:hover { border-color: var(--accent); }
+  .counter { color: var(--muted); font-size: 13px; }
+  /* modal */
+  .overlay {
+    position: fixed; inset: 0; background: rgba(4,8,14,.7); backdrop-filter: blur(4px);
+    display: none; align-items: center; justify-content: center; z-index: 50; padding: 20px;
+  }
+  .overlay.show { display: flex; }
+  .modal {
+    background: var(--card); border: 1px solid var(--border); border-radius: 18px;
+    max-width: 440px; width: 100%; padding: 32px 28px; text-align: center; box-shadow: var(--shadow);
+    animation: pop .25s ease;
+  }
+  @keyframes pop { from { transform: scale(.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  .score-ring { font-size: 52px; font-weight: 800; letter-spacing: -1px; margin: 6px 0; }
+  .score-sub { color: var(--muted); font-size: 15px; margin-bottom: 18px; }
+  .grade { font-size: 20px; font-weight: 700; margin-bottom: 10px; }
+  .modal .btn { width: 100%; margin-top: 8px; }
+  .breakdown { text-align: left; margin: 18px 0; font-size: 13.5px; color: var(--muted); max-height: 180px; overflow-y: auto; }
+  .breakdown div { padding: 3px 0; }
+  .breakdown .b-ok { color: var(--ok); }
+  .breakdown .b-bad { color: var(--bad); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="hero">
+    <span class="pill">06 · 쿠버네티스 주요 요소 실습</span>
+    <h1>객관식 자가진단 20문항</h1>
+    <p>namespace · Pod · Service · ReplicaSet · Deployment · Ingress</p>
+    <p>각 문항에서 하나를 고른 뒤 하단 <b>“채점하기”</b>를 누르면 결과 모달과 해설이 표시됩니다.</p>
+    <div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
+  </header>
+
+  <div id="quiz"></div>
+</div>
+
+<div class="actionbar">
+  <span class="counter" id="counter">0 / 20 선택됨</span>
+  <button class="btn btn-ghost" id="resetBtn">초기화</button>
+  <button class="btn btn-primary" id="submitBtn">채점하기</button>
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <div class="grade" id="grade"></div>
+    <div class="score-ring" id="scoreRing"></div>
+    <div class="score-sub" id="scoreSub"></div>
+    <div class="breakdown" id="breakdown"></div>
+    <button class="btn btn-primary" id="reviewBtn">해설 보며 복습하기</button>
+    <button class="btn btn-ghost" id="retryBtn">다시 풀기</button>
+  </div>
+</div>
+
+<script>
+const QUESTIONS = [
+  {
+    topic: "namespace",
+    q: "네임스페이스에 대한 설명으로 <b>옳은</b> 것은?",
+    opts: [
+      "네임스페이스를 나누면 그 자체로 팀 간 권한(RBAC)까지 자동으로 격리된다.",
+      "클러스터 내 리소스를 논리적으로 분리하는 단위이며, 다른 네임스페이스 자원 조회 시 <code>-n</code> 옵션이 필요하다.",
+      "<code>default</code> 네임스페이스의 Pod를 조회하려면 항상 <code>--namespace=default</code>를 명시해야 한다.",
+      "네임스페이스가 다르면 Pod 간 네트워크 통신이 물리적으로 완전히 차단된다."
+    ],
+    answer: 1,
+    explain: "네임스페이스는 <b>논리적 분리 단위</b>일 뿐이다. <code>default</code>는 옵션 없이 조회되고, 다른 NS는 <code>-n</code>으로 지정한다. (⚠ 강의 범위 밖: 권한 격리는 RBAC가, 네트워크 차단은 NetworkPolicy가 별도로 필요 — 06회차엔 안 나옴)"
+  },
+  {
+    topic: "Pod",
+    q: "하나의 Pod 안에 nginx 컨테이너와 redis 컨테이너를 함께 넣었다. 두 컨테이너의 통신 방식으로 옳은 것은?",
+    opts: [
+      "서로 다른 IP를 가지므로 Service를 만들어야 통신할 수 있다.",
+      "같은 Pod라도 컨테이너 간 통신은 반드시 클러스터 DNS를 거친다.",
+      "Pod는 하나의 IP를 공유하므로 <code>localhost(127.0.0.1)</code> 기준으로 서로 통신한다.",
+      "멀티 컨테이너 Pod는 컨테이너마다 별도 IP가 할당된다."
+    ],
+    answer: 2,
+    explain: "Pod는 네트워크적으로 <b>하나의 IP를 갖는 단일 유닛</b>이다. 같은 Pod 내 컨테이너는 <code>localhost</code>로 서로 통신한다."
+  },
+  {
+    topic: "Service",
+    q: "스프링 앱이 컨테이너에서 8080 포트를 리슨한다. Service를 <code>port: 80</code>, <code>targetPort: 8080</code>으로 만들면?",
+    opts: [
+      "호출자는 80으로 요청하고, Service가 이를 Pod의 8080으로 포워딩한다.",
+      "호출자는 8080으로 요청하고, Service가 이를 80으로 포워딩한다.",
+      "port와 targetPort가 다르면 Service가 생성되지 않는다.",
+      "targetPort는 외부에 노출되는 포트이고 port는 컨테이너 포트다."
+    ],
+    answer: 0,
+    explain: "<b>port</b>는 Service가 클러스터 내부에서 리슨하는 포트(호출자가 쓰는 값), <b>targetPort</b>는 요청을 전달할 실제 Pod 컨테이너 포트다."
+  },
+  {
+    topic: "ReplicaSet",
+    q: "ReplicaSet의 <code>selector.matchLabels</code>와 <code>template.metadata.labels</code>의 관계로 옳은 것은?",
+    opts: [
+      "둘은 서로 무관하며 아무 값이나 넣어도 동작한다.",
+      "template.labels는 새로 생성되는 Pod에 부여되는 라벨이고, 이는 selector.matchLabels와 일치해야 한다.",
+      "selector.matchLabels는 서비스가 사용하고 ReplicaSet은 참조하지 않는다.",
+      "matchLabels가 template.labels보다 많아야 한다."
+    ],
+    answer: 1,
+    explain: "template.labels로 부여된 라벨이 selector.matchLabels와 <b>일치</b>해야 ReplicaSet이 자신이 만든 Pod를 관리 대상으로 인식한다. 이 라벨은 Service의 selector와도 맞춰야 한다."
+  },
+  {
+    topic: "Deployment",
+    q: "Deployment의 <b>기본 배포 전략</b>은?",
+    opts: [
+      "Recreate (전체 종료 후 재생성)",
+      "Blue-Green",
+      "Canary",
+      "Rolling Update (순차 교체)"
+    ],
+    answer: 3,
+    explain: "Deployment의 기본 전략은 <b>Rolling Update</b>다. 새 Pod를 만든 뒤 기존 Pod를 순차 종료해 무중단에 가깝게 교체한다."
+  },
+  {
+    topic: "Deployment",
+    q: "이미지 태그를 <code>latest</code> 그대로 두고 새 revision을 만들어 재배포하려 한다. 가장 적절한 명령은?",
+    opts: [
+      "<code>kubectl delete pod</code>로 Pod를 지운다.",
+      "<code>kubectl scale --replicas=0</code> 후 다시 올린다.",
+      "<code>kubectl rollout restart deployment &lt;name&gt;</code>",
+      "<code>kubectl get pods -A</code>"
+    ],
+    answer: 2,
+    explain: "<code>rollout restart</code>는 template에 변화가 없어도 내부적으로 새 ReplicaSet을 만들어 강제로 새 revision을 생성한다. <code>latest</code> 태그를 그대로 써도 재배포가 된다."
+  },
+  {
+    topic: "Ingress",
+    q: "Ingress와 Ingress Controller의 역할 구분으로 옳은 것은?",
+    opts: [
+      "Ingress가 실제 라우팅을 수행하고, Controller는 규칙만 저장한다.",
+      "Ingress는 라우팅 규칙을 정의하고, Ingress Controller가 그 규칙을 해석해 실제 라우팅을 수행한다.",
+      "둘은 같은 리소스의 다른 이름이다.",
+      "Ingress Controller는 규칙 정의, Ingress는 LB 생성을 담당한다."
+    ],
+    answer: 1,
+    explain: "<b>Ingress = 규칙 정의</b>(선언), <b>Ingress Controller = 실제 라우팅 수행</b>. Controller가 Ingress 리소스를 읽어 Service로 트래픽을 보낸다."
+  },
+  {
+    topic: "Ingress",
+    q: "도메인이 서로 다른 Ingress 리소스가 3개 있다. 필요한 Ingress Controller 개수는?",
+    opts: [
+      "Ingress마다 하나씩, 총 3개가 반드시 필요하다.",
+      "도메인 개수의 2배가 필요하다.",
+      "1개로 충분하다. 하나의 Controller가 여러 Ingress 리소스를 참조해 라우팅한다.",
+      "Controller 없이 Ingress만으로 라우팅된다."
+    ],
+    answer: 2,
+    explain: "Controller는 <b>1개면 충분</b>하다. 도메인이 다른 Ingress가 여러 개여도 하나의 Controller가 모두 참조해 라우팅한다."
+  },
+  {
+    topic: "Service",
+    q: "Service의 selector와 매칭되는 Pod가 3개일 때 트래픽 처리 방식은?",
+    opts: [
+      "가장 먼저 생성된 Pod 하나에만 트래픽이 간다.",
+      "매칭되는 Pod들로 자동 로드밸런싱된다(기본 라운드 로빈).",
+      "관리자가 수동으로 트래픽 대상 Pod를 지정해야 한다.",
+      "Service는 로드밸런싱을 하지 않는다."
+    ],
+    answer: 1,
+    explain: "selector와 매칭되는 Pod가 여러 개면 Service가 <b>자동 로드밸런싱</b>한다. 기본은 라운드 로빈이지만 캐싱/커넥션 유지 등으로 완전히 공평하지 않을 수 있다."
+  },
+  {
+    topic: "Deployment",
+    q: "Deployment로 만든 Pod를 <code>kubectl delete pod &lt;name&gt;</code>으로 삭제하면?",
+    opts: [
+      "삭제된 상태로 유지된다.",
+      "Deployment(선언적 리소스)가 desired 상태를 맞추기 위해 Pod를 다시 생성한다.",
+      "Deployment 전체가 함께 삭제된다.",
+      "에러가 발생하며 삭제되지 않는다."
+    ],
+    answer: 1,
+    explain: "Deployment/ReplicaSet은 <b>선언적 리소스</b>라 지정된 replicas를 유지한다. Pod를 지우면 컨트롤러가 즉시 새로 만든다."
+  },
+  {
+    topic: "트러블슈팅",
+    q: "새로 만든 Pod가 계속 <code>Pending</code> 상태다. 원인 파악에 <b>가장 적절한</b> 첫 명령은?",
+    opts: [
+      "<code>kubectl logs &lt;pod&gt;</code> — 컨테이너 로그 확인",
+      "<code>kubectl describe pod &lt;pod&gt;</code> — Events 섹션 확인",
+      "<code>kubectl delete pod &lt;pod&gt;</code> — 재생성 유도",
+      "<code>kubectl edit svc</code> — 서비스 수정"
+    ],
+    answer: 1,
+    explain: "<code>Pending</code>은 컨테이너가 아직 뜨지 않아 <b>로그가 없다</b>. <code>describe pod</code>의 <b>Events</b>(스케줄 실패 사유 등)를 봐야 한다."
+  },
+  {
+    topic: "Service",
+    q: "<code>order</code> 네임스페이스의 Pod에서 <code>payment</code> 네임스페이스의 <code>payment-svc</code>를 호출하는 올바른 주소는?",
+    opts: [
+      "<code>http://payment-svc</code>",
+      "<code>http://payment-svc.payment.svc.cluster.local</code>",
+      "<code>http://payment.payment-svc.local</code>",
+      "<code>http://localhost/payment-svc</code>"
+    ],
+    answer: 1,
+    explain: "다른 네임스페이스 접근은 <code>&lt;service&gt;.&lt;namespace&gt;.svc.cluster.local</code> 형식. 짧은 이름은 호출자와 같은 네임스페이스에서 먼저 조회된다."
+  },
+  {
+    topic: "Deployment",
+    q: "Deployment에서 <b>새로운 ReplicaSet(revision)</b>이 생성되는 시점은?",
+    opts: [
+      "replicas 값만 바꿔도 매번 새 ReplicaSet이 생긴다.",
+      "<code>spec.template</code>의 내용(예: 이미지)이 변경될 때.",
+      "Pod가 삭제될 때마다.",
+      "Service를 수정할 때."
+    ],
+    answer: 1,
+    explain: "Deployment는 <code>spec.template</code>이 변경될 때 새 ReplicaSet(revision)을 만든다. 단순 replicas 스케일은 기존 ReplicaSet을 재사용한다."
+  },
+  {
+    topic: "Deployment",
+    q: "직전 배포에 버그가 있어 이전 버전으로 되돌리려 한다. 올바른 명령은?",
+    opts: [
+      "<code>kubectl rollout undo deployment &lt;name&gt;</code>",
+      "<code>kubectl delete deployment &lt;name&gt;</code>",
+      "<code>kubectl rollback &lt;name&gt;</code>",
+      "<code>kubectl apply --previous</code>"
+    ],
+    answer: 0,
+    explain: "<code>kubectl rollout undo</code>가 이전 revision(ReplicaSet)으로 롤백한다. <code>--to-revision=N</code>으로 특정 리비전 지정도 가능하다."
+  },
+  {
+    topic: "Service",
+    q: "같은 네임스페이스 내에서 <code>my-service</code>(port 80)를 호출하는 엔드포인트로 옳은 것은?",
+    opts: [
+      "<code>http://my-service:80</code>",
+      "<code>http://&lt;pod-ip&gt;:80</code> 를 직접 써야 한다.",
+      "<code>http://my-service.default.pod:80</code>",
+      "Service는 이름으로 호출할 수 없다."
+    ],
+    answer: 0,
+    explain: "Service는 서비스 디스커버리를 제공한다. 같은 네임스페이스에선 <code>http://&lt;service-name&gt;:&lt;port&gt;</code>로 호출한다. Pod IP는 바뀌므로 직접 쓰지 않는다."
+  },
+  {
+    topic: "ReplicaSet",
+    q: "ReplicaSet의 핵심 역할은?",
+    opts: [
+      "외부 트래픽을 도메인 기반으로 라우팅한다.",
+      "지정된 수(replicas)의 Pod 복제본이 항상 실행되도록 보장한다.",
+      "컨테이너 이미지를 빌드한다.",
+      "네임스페이스 간 권한을 관리한다."
+    ],
+    answer: 1,
+    explain: "ReplicaSet은 <b>desired replicas 수를 유지</b>한다. Pod가 죽으면 새로 만들어 항상 지정된 개수를 맞춘다."
+  },
+  {
+    topic: "Pod",
+    q: "여러 컨테이너를 하나의 Pod에 두는 것이 <b>적절한</b> 경우는?",
+    opts: [
+      "앱과 데이터베이스를 함께 넣어 독립적으로 스케일하려 할 때.",
+      "로그 수집 사이드카·health check 등 밀접하게 협력하며 높은 내부 통신이 필요할 때.",
+      "서로 전혀 관련 없는 서비스를 비용 절감을 위해 묶을 때.",
+      "각 컨테이너를 다른 노드에 배치하고 싶을 때."
+    ],
+    answer: 1,
+    explain: "멀티 컨테이너 Pod는 <b>밀접 협력·높은 내부 통신</b>(사이드카, 로그 수집, health check 등)에 적합하다. 독립 스케일이 필요한 DB 같은 것은 분리해야 한다."
+  },
+  {
+    topic: "Ingress",
+    q: "<code>api.shop.com/orders</code>는 order-service로, <code>/payments</code>는 payment-service로 보내려 한다. 이는 Ingress의 어떤 기능인가?",
+    opts: [
+      "도메인(host) 기반 라우팅만 사용한 것이다.",
+      "prefix(path) 단위로 Service마다 라우팅 규칙을 지정한 것이다.",
+      "Service의 selector로 처리하는 것이다.",
+      "ReplicaSet이 담당하는 기능이다."
+    ],
+    answer: 1,
+    explain: "같은 host 아래 <code>/orders</code>, <code>/payments</code>처럼 <b>prefix 단위</b>로 Service를 나눠 보내는 것은 Ingress의 path 기반 라우팅이다."
+  },
+  {
+    topic: "Deployment",
+    q: "Deployment와 ReplicaSet, Pod의 관계로 옳은 것은?",
+    opts: [
+      "Deployment는 Pod를 직접 만들고 ReplicaSet은 관여하지 않는다.",
+      "Deployment가 ReplicaSet을 생성하고, ReplicaSet이 Pod를 생성한다.",
+      "Pod가 ReplicaSet을 만들고 ReplicaSet이 Deployment를 만든다.",
+      "셋은 완전히 독립적이며 계층 관계가 없다."
+    ],
+    answer: 1,
+    explain: "계층은 <b>Deployment → ReplicaSet → Pod</b>. Deployment가 ReplicaSet을 만들고, ReplicaSet이 Pod를 생성/유지한다."
+  },
+  {
+    topic: "Pod",
+    q: "쿠버네티스에서 Pod에 대한 설명으로 옳은 것은?",
+    opts: [
+      "배포할 수 있는 가장 작은 단위이며, 1개 이상의 컨테이너로 구성된다.",
+      "항상 정확히 하나의 컨테이너만 가질 수 있다.",
+      "Pod는 영속적이어서 노드 장애에도 절대 사라지지 않는다.",
+      "Pod는 이미지 저장소 역할을 한다."
+    ],
+    answer: 0,
+    explain: "Pod는 <b>배포 가능한 가장 작은 단위</b>이며 1개 이상의 컨테이너로 구성된다. Pod는 기본적으로 임시(ephemeral)라 언제든 재생성될 수 있다."
+  }
+];
+
+const quizEl = document.getElementById('quiz');
+const answers = new Array(QUESTIONS.length).fill(null);
+
+QUESTIONS.forEach((item, qi) => {
+  const card = document.createElement('div');
+  card.className = 'q';
+  card.id = 'q' + qi;
+  const optsHtml = item.opts.map((o, oi) => `
+    <label class="opt" data-q="${qi}" data-o="${oi}">
+      <input type="radio" name="q${qi}" value="${oi}">
+      <span class="otext">${o}</span>
+    </label>`).join('');
+  card.innerHTML = `
+    <div class="qhead">
+      <span class="num">Q${qi + 1}</span>
+      <div>
+        <div class="topic">${item.topic}</div>
+        <div class="qtext">${item.q}</div>
+      </div>
+    </div>
+    <div class="opts">${optsHtml}</div>
+    <div class="explain" id="ex${qi}"></div>`;
+  quizEl.appendChild(card);
+});
+
+function updateCounter() {
+  const done = answers.filter(a => a !== null).length;
+  document.getElementById('counter').textContent = `${done} / ${QUESTIONS.length} 선택됨`;
+  document.getElementById('progress').style.width = (done / QUESTIONS.length * 100) + '%';
+}
+
+quizEl.addEventListener('change', (e) => {
+  if (e.target.matches('input[type=radio]')) {
+    const qi = +e.target.closest('.opt').dataset.q;
+    answers[qi] = +e.target.value;
+    updateCounter();
+  }
+});
+
+document.getElementById('resetBtn').addEventListener('click', resetAll);
+function resetAll() {
+  answers.fill(null);
+  document.querySelectorAll('input[type=radio]').forEach(r => r.checked = false);
+  document.querySelectorAll('.opt').forEach(o => o.classList.remove('correct', 'wrong'));
+  document.querySelectorAll('.explain').forEach(e => e.classList.remove('show'));
+  updateCounter();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+document.getElementById('submitBtn').addEventListener('click', () => {
+  const unanswered = answers.filter(a => a === null).length;
+  if (unanswered > 0 && !confirm(`아직 ${unanswered}문항을 안 풀었습니다. 그래도 채점할까요?`)) return;
+
+  let score = 0;
+  let breakdown = '';
+  QUESTIONS.forEach((item, qi) => {
+    const chosen = answers[qi];
+    const correct = item.answer;
+    const labels = document.querySelectorAll(`#q${qi} .opt`);
+    labels.forEach((lab, oi) => {
+      lab.classList.remove('correct', 'wrong');
+      if (oi === correct) lab.classList.add('correct');
+      if (oi === chosen && chosen !== correct) lab.classList.add('wrong');
+    });
+    const ex = document.getElementById('ex' + qi);
+    ex.innerHTML = `<b>정답: ${correct + 1}번.</b> ${item.explain}`;
+    ex.classList.add('show');
+    const ok = chosen === correct;
+    if (ok) score++;
+    breakdown += `<div class="${ok ? 'b-ok' : 'b-bad'}">${ok ? '✔' : '✗'} Q${qi + 1} (${item.topic})${chosen === null ? ' · 미응답' : ''}</div>`;
+  });
+
+  const pct = Math.round(score / QUESTIONS.length * 100);
+  let grade, emoji;
+  if (pct >= 90) { grade = '완벽에 가깝습니다'; emoji = '🏆'; }
+  else if (pct >= 75) { grade = '실무 감각 양호'; emoji = '💪'; }
+  else if (pct >= 60) { grade = '핵심은 잡았습니다'; emoji = '📚'; }
+  else { grade = '복습이 필요합니다'; emoji = '🔧'; }
+
+  document.getElementById('grade').textContent = emoji + ' ' + grade;
+  document.getElementById('scoreRing').textContent = score + ' / ' + QUESTIONS.length;
+  document.getElementById('scoreSub').textContent = `정답률 ${pct}%`;
+  document.getElementById('breakdown').innerHTML = breakdown;
+  document.getElementById('overlay').classList.add('show');
+});
+
+document.getElementById('reviewBtn').addEventListener('click', () => {
+  document.getElementById('overlay').classList.remove('show');
+});
+document.getElementById('retryBtn').addEventListener('click', () => {
+  document.getElementById('overlay').classList.remove('show');
+  resetAll();
+});
+document.getElementById('overlay').addEventListener('click', (e) => {
+  if (e.target.id === 'overlay') document.getElementById('overlay').classList.remove('show');
+});
+
+updateCounter();
+</script>
+</body>
+</html>
