@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>spring 백엔드 서버 배포(1차) · 객관식 20문항</title>
+<style>
+  :root {
+    --bg: #0f1420;
+    --card: #1a2130;
+    --card2: #212a3c;
+    --border: #2d3850;
+    --text: #e6ebf2;
+    --muted: #93a1b8;
+    --accent: #4f8cff;
+    --accent-soft: #23375e;
+    --ok: #34d399;
+    --ok-soft: #17372c;
+    --bad: #f87171;
+    --bad-soft: #3a1f22;
+    --shadow: 0 10px 30px rgba(0,0,0,.4);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans KR", sans-serif;
+    background: linear-gradient(180deg, #0c101a 0%, #0f1420 100%);
+    color: var(--text);
+    line-height: 1.6;
+    padding: 32px 16px 120px;
+  }
+  .wrap { max-width: 820px; margin: 0 auto; }
+  header.hero {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px 28px 24px;
+    margin-bottom: 24px;
+    box-shadow: var(--shadow);
+  }
+  header.hero h1 { margin: 0 0 8px; font-size: 22px; letter-spacing: -.3px; }
+  header.hero p { margin: 4px 0; color: var(--muted); font-size: 14px; }
+  .pill {
+    display: inline-block; background: var(--accent-soft); color: #bcd3ff;
+    border-radius: 999px; padding: 3px 12px; font-size: 12px; font-weight: 600;
+    margin-bottom: 12px;
+  }
+  .progress-bar { height: 6px; background: var(--card2); border-radius: 6px; overflow: hidden; margin-top: 16px; }
+  .progress-fill { height: 100%; width: 0%; background: linear-gradient(90deg,#4f8cff,#34d399); transition: width .3s ease; }
+  .q {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 22px 22px 18px;
+    margin-bottom: 16px;
+    box-shadow: var(--shadow);
+  }
+  .q .qhead { display: flex; gap: 10px; align-items: baseline; margin-bottom: 14px; }
+  .q .num { flex: 0 0 auto; font-weight: 700; color: var(--accent); font-size: 14px; }
+  .q .qtext { font-size: 16px; font-weight: 600; }
+  .q .topic { font-size: 11px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .5px; }
+  code { background: #0b1220; border: 1px solid var(--border); border-radius: 5px; padding: 1px 6px; font-size: 13px; color: #ffd58a; }
+  .opts { display: flex; flex-direction: column; gap: 8px; }
+  label.opt {
+    display: flex; gap: 11px; align-items: flex-start;
+    background: var(--card2); border: 1.5px solid var(--border);
+    border-radius: 10px; padding: 12px 14px; cursor: pointer;
+    transition: border-color .15s, background .15s;
+  }
+  label.opt:hover { border-color: var(--accent); }
+  label.opt input { margin-top: 3px; accent-color: var(--accent); flex: 0 0 auto; }
+  label.opt .otext { font-size: 14.5px; }
+  label.opt.correct { border-color: var(--ok); background: var(--ok-soft); }
+  label.opt.wrong { border-color: var(--bad); background: var(--bad-soft); }
+  .explain {
+    margin-top: 12px; font-size: 13.5px; color: var(--muted);
+    border-left: 3px solid var(--accent); padding: 8px 0 8px 12px;
+    background: #121a29; border-radius: 0 8px 8px 0; display: none;
+  }
+  .explain.show { display: block; }
+  .explain b { color: var(--text); }
+  .actionbar {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: rgba(15,20,32,.92); backdrop-filter: blur(8px);
+    border-top: 1px solid var(--border); padding: 14px 16px;
+    display: flex; justify-content: center; gap: 12px; align-items: center; z-index: 20;
+  }
+  .btn {
+    border: none; border-radius: 10px; padding: 12px 26px; font-size: 15px; font-weight: 700;
+    cursor: pointer; font-family: inherit;
+  }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: #6b9dff; }
+  .btn-ghost { background: var(--card2); color: var(--text); border: 1px solid var(--border); }
+  .btn-ghost:hover { border-color: var(--accent); }
+  .counter { color: var(--muted); font-size: 13px; }
+  /* modal */
+  .overlay {
+    position: fixed; inset: 0; background: rgba(4,8,14,.7); backdrop-filter: blur(4px);
+    display: none; align-items: center; justify-content: center; z-index: 50; padding: 20px;
+  }
+  .overlay.show { display: flex; }
+  .modal {
+    background: var(--card); border: 1px solid var(--border); border-radius: 18px;
+    max-width: 440px; width: 100%; padding: 32px 28px; text-align: center; box-shadow: var(--shadow);
+    animation: pop .25s ease;
+  }
+  @keyframes pop { from { transform: scale(.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  .score-ring { font-size: 52px; font-weight: 800; letter-spacing: -1px; margin: 6px 0; }
+  .score-sub { color: var(--muted); font-size: 15px; margin-bottom: 18px; }
+  .grade { font-size: 20px; font-weight: 700; margin-bottom: 10px; }
+  .modal .btn { width: 100%; margin-top: 8px; }
+  .breakdown { text-align: left; margin: 18px 0; font-size: 13.5px; color: var(--muted); max-height: 180px; overflow-y: auto; }
+  .breakdown div { padding: 3px 0; }
+  .breakdown .b-ok { color: var(--ok); }
+  .breakdown .b-bad { color: var(--bad); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="hero">
+    <span class="pill">07 · spring 백엔드 서버 배포(1차)</span>
+    <h1>객관식 자가진단 25문항</h1>
+    <p>인프라 사전 생성 · 이미지 빌드/ECR · Secret · Deployment(readinessProbe/resources) · HTTPS 인증서 · GitHub Actions CI/CD</p>
+    <p>각 문항에서 하나를 고른 뒤 하단 <b>"채점하기"</b>를 누르면 결과 모달과 해설이 표시됩니다.</p>
+    <div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
+  </header>
+
+  <div id="quiz"></div>
+</div>
+
+<div class="actionbar">
+  <span class="counter" id="counter">0 / 25 선택됨</span>
+  <button class="btn btn-ghost" id="resetBtn">초기화</button>
+  <button class="btn btn-primary" id="submitBtn">채점하기</button>
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <div class="grade" id="grade"></div>
+    <div class="score-ring" id="scoreRing"></div>
+    <div class="score-sub" id="scoreSub"></div>
+    <div class="breakdown" id="breakdown"></div>
+    <button class="btn btn-primary" id="reviewBtn">해설 보며 복습하기</button>
+    <button class="btn btn-ghost" id="retryBtn">다시 풀기</button>
+  </div>
+</div>
+
+<script>
+const QUESTIONS = [
+  {
+    topic: "인프라(RDS)",
+    q: "손쉬운 생성으로 RDS를 막 만들면 기본으로 잡히는 <b>디폴트 보안그룹</b>의 인바운드 규칙 상태와, 이후 왜 3306 포트를 열어줘야 하는지로 옳은 것은?",
+    opts: [
+      "디폴트 보안그룹은 3306이 이미 열려 있어 별도 작업이 필요 없다.",
+      "인바운드 규칙이 비어 있어서, EC2(파드)에서 mysql 접속에 쓰는 3306 포트를 인바운드에 직접 추가해야 한다.",
+      "아웃바운드 규칙이 비어 있어서 아웃바운드에 3306을 추가해야 한다.",
+      "보안그룹은 RDS 생성 시 자동으로 삭제되므로 새로 만들어야 한다."
+    ],
+    answer: 1,
+    explain: "디폴트 보안그룹은 <b>인바운드 규칙이 비어있고 아웃바운드만 전체 허용</b>된 상태다. EC2 위의 Pod가 mysql(3306)로 RDS에 접근하려면 인바운드 규칙에 3306 포트를 직접 추가해야 한다."
+  },
+  {
+    topic: "인프라(RDS)",
+    q: "RDS의 <b>Public Access</b>를 허용해야 하는 이유로 강의에서 든 근거는?",
+    opts: [
+      "Public Access를 켜지 않으면 같은 AWS 내 EC2에서도 RDS에 접근할 수 없기 때문이다.",
+      "로컬 PC의 DB 툴(워크벤치 등)로 접속해 스키마를 생성하는 등 AWS 바깥에서 접근할 일이 있기 때문이다.",
+      "Public Access는 보안 그룹 설정을 대체하므로 포트를 열 필요가 없어지기 때문이다.",
+      "Redis Pod에서 RDS로 접근하기 위해 반드시 필요하기 때문이다."
+    ],
+    answer: 1,
+    explain: "포트만 열어주면 <b>같은 AWS 내부(EC2 등)에서는 이미 접근 가능</b>하다. Public Access는 개발자가 로컬 PC의 DB 툴로 스키마를 만들고 데이터를 조회하는 등 <b>AWS 바깥</b>에서 접근해야 할 때 필요하다."
+  },
+  {
+    topic: "인프라(ECR)",
+    q: "ECR에 대한 설명으로 옳은 것은?",
+    opts: [
+      "쿠버네티스 클러스터 내부에서만 쓰이는 사설 DNS 서버다.",
+      "Docker Hub와 동일한 역할을 하는, AWS가 제공하는 이미지 저장소(레지스트리)다.",
+      "이미지를 저장하지 않고 빌드 로그만 저장하는 서비스다.",
+      "RDS 전용 백업 저장소다."
+    ],
+    answer: 1,
+    explain: "ECR은 <b>Docker Hub와 같은 역할</b>을 하는 이미지 저장소로, AWS에서 제공하는 컨테이너 레지스트리다."
+  },
+  {
+    topic: "인프라(Redis)",
+    q: "Redis를 Pod/Service로 구성했는데, 강의에서 이 Redis 서비스를 <b>Ingress로 노출하지 않은</b> 이유는?",
+    opts: [
+      "Redis는 Ingress와 호환되지 않는 프로토콜을 쓰기 때문이다.",
+      "Spring 파드만 Redis에 접근하면 되고, 외부의 다른 사용자가 Redis에 접근할 필요가 없기 때문이다.",
+      "Redis는 자동으로 퍼블릭 액세스가 활성화되기 때문에 Ingress가 필요 없다.",
+      "Ingress를 쓰면 Redis 성능이 크게 저하되기 때문이다."
+    ],
+    answer: 1,
+    explain: "Redis 서비스는 <code>ClusterIP</code> 타입이라 Ingress로 라우팅해주지 않으면 외부에서 접근이 불가능하다. Spring Pod만 내부적으로 Redis에 접근하면 되므로 <b>의도적으로 Ingress 없이</b> 둔다."
+  },
+  {
+    topic: "이미지 빌드",
+    q: "이 프로젝트가 로컬용 <code>application-local.yaml</code>과 배포용 <code>application-prod.yaml</code>을 분기 처리하는 방식으로 옳은 것은?",
+    opts: [
+      "두 파일의 파일명을 실행 시점에 동적으로 바꿔서 분기한다.",
+      "<code>application.yaml</code>에서 <code>profile</code> 값을 지정하면, 그 값과 각 프로필 파일의 <code>config.activate.on-profile</code> 값이 일치하는 파일이 사용된다.",
+      "환경변수 <code>PROFILE</code>을 도커 이미지 빌드 시점에 하드코딩해야 한다.",
+      "로컬과 배포 환경은 같은 yaml 파일을 공유하며 분기 처리를 하지 않는다."
+    ],
+    answer: 1,
+    explain: "<code>application.yaml</code>에 선언된 profile 값(<code>local</code> 또는 <code>prod</code>)과 각 프로필 전용 파일의 <code>config.activate.on-profile</code> 값이 <b>싱크가 맞아야</b> 해당 프로필 파일이 적용된다."
+  },
+  {
+    topic: "이미지 빌드",
+    q: "이미지를 빌드해서 ECR에 올리는 시점의 <code>DB_HOST</code>/<code>DB_PW</code> 상태로 옳은 것은?",
+    opts: [
+      "이미지 빌드 시점에 이미 실제 값이 주입되어 이미지 안에 포함된다.",
+      "이미지에는 변수화만 되어 있고 실제 값은 주입되지 않으며, Pod가 실행되는 시점에 Secret에서 끌어와 주입된다.",
+      "값은 항상 localhost로 고정되어 있어 배포 후에도 로컬 DB를 사용한다.",
+      "이미지 빌드 전에 GitHub Secrets에서 값을 읽어와 소스코드에 직접 써 넣는다."
+    ],
+    answer: 1,
+    explain: "소스코드·이미지 단계에서는 <code>DB_HOST</code>/<code>DB_PW</code>가 <b>변수화(<code>${'{'}DB_HOST{'}'}</code>)</b>만 되어 있을 뿐 실제 값이 없다. 실제 값은 Kubernetes Secret에 저장해두고, <b>Pod가 실행되는 시점</b>에 env로 주입한다."
+  },
+  {
+    topic: "Secret",
+    q: "DB 자격증명을 담은 Secret을 생성하는 명령의 형태로 옳은 것은?",
+    opts: [
+      "<code>kubectl create secret generic &lt;이름&gt; --from-literal=DB_HOST=&lt;값&gt; --from-literal=DB_PW=&lt;값&gt; -n &lt;ns&gt;</code>",
+      "<code>kubectl apply -f secret.yaml --encrypt</code> (yaml 없이는 생성 불가)",
+      "<code>kubectl set secret DB_HOST=&lt;값&gt;</code>",
+      "<code>kubectl config set-secret</code>"
+    ],
+    answer: 0,
+    explain: "<code>kubectl create secret generic &lt;secret명&gt; --from-literal=키=값 ... -n &lt;namespace&gt;</code> 형태로 key-value 쌍을 여러 개 넣어 Secret을 만든다."
+  },
+  {
+    topic: "Secret",
+    q: "<code>kubectl get secret ... -o yaml</code>로 조회했을 때 값이 원래 넣은 값 그대로 보이지 않는 이유는?",
+    opts: [
+      "AES 등으로 강하게 암호화되어 있어 복호화 키 없이는 절대 원문을 알 수 없다.",
+      "Base64로 인코딩되어 있을 뿐이라 얼마든지 디코딩할 수 있다.",
+      "조회 시마다 값이 무작위로 재생성되기 때문이다.",
+      "네임스페이스가 다르면 값이 자동으로 마스킹되기 때문이다."
+    ],
+    answer: 1,
+    explain: "Secret에 저장된 값은 <b>암호화가 아니라 Base64 인코딩</b>이다. Base64 디코더로 얼마든지 원문을 복원할 수 있으므로, 이것만으로 완전한 보안이 보장되는 것은 아니다."
+  },
+  {
+    topic: "Secret",
+    q: "이미 만든 Secret에 새로운 키(예: <code>JWT_SECRET</code>)를 <b>추가</b>하고 싶을 때, 강의에서 권장한 방법은?",
+    opts: [
+      "<code>kubectl edit secret</code>으로 직접 필드를 추가한다.",
+      "<code>kubectl patch secret --add</code> 전용 명령을 사용한다.",
+      "기존 Secret을 삭제하고, 필요한 키를 모두 포함해서 다시 생성한다.",
+      "새 이름의 Secret을 하나 더 만들고 기존 것과 자동 병합되길 기다린다."
+    ],
+    answer: 2,
+    explain: "키를 추가하는 전용 명령이 마땅치 않으므로, <b>기존 Secret을 삭제(<code>kubectl delete secret</code>)하고 필요한 키를 모두 포함해 다시 생성</b>하는 방식을 권장한다고 강의에서 설명했다."
+  },
+  {
+    topic: "Deployment",
+    q: "Deployment의 <code>env</code>에서 Secret 값을 끌어다 쓸 때 반드시 일치해야 하는 것은?",
+    opts: [
+      "env에서 쓰는 변수 이름과 <code>application.yaml</code>의 <code>${'{'}변수명{'}'}</code>이 일치해야 한다.",
+      "env 변수 이름은 아무렇게나 지어도 스프링이 자동으로 매핑해준다.",
+      "Secret의 이름과 Deployment의 이름이 반드시 같아야 한다.",
+      "env는 Secret이 아니라 ConfigMap에서만 값을 가져올 수 있다."
+    ],
+    answer: 0,
+    explain: "Deployment의 <code>env</code>에 정의한 변수 이름(예: <code>DB_HOST</code>)이 <code>application.yaml</code>에서 참조하는 <code>${'{'}DB_HOST{'}'}</code> 변수명과 <b>정확히 일치</b>해야 하고, <code>valueFrom.secretKeyRef</code>로 Secret의 key를 지정해 값을 끌어온다."
+  },
+  {
+    topic: "Deployment",
+    q: "Deployment에 <code>resources</code>(requests/limits)를 아예 설정하지 않으면 벌어질 수 있는 일은?",
+    opts: [
+      "Pod가 아예 스케줄되지 않고 Pending 상태로 남는다.",
+      "Pod가 최대치로 EC2(노드) 자원을 점유할 수 있어, 같은 노드의 다른 Pod가 자원 부족을 겪을 수 있다.",
+      "쿠버네티스가 자동으로 기본 최소값(0.1 core/128Mi)을 강제 적용한다.",
+      "resources 설정이 없으면 Deployment 자체가 생성되지 않는다."
+    ],
+    answer: 1,
+    explain: "제약을 걸지 않으면 <b>Pod가 EC2 자원을 최대치까지 점유</b>할 수 있어, 부하가 몰릴 때 같은 노드의 다른 Pod들이 자원을 균등하게 쓰지 못하게 된다."
+  },
+  {
+    topic: "Deployment",
+    q: "<code>readinessProbe</code>가 <code>/health</code>로 컨테이너 시작 10초 뒤부터 요청을 보내는 방식이 필요한 이유로 옳은 것은?",
+    opts: [
+      "스프링 서버가 완전히 기동하는 데 시간이 걸리므로, 온전히 뜬 걸 확인한 뒤에야 기존 Pod를 내리기 위해서다.",
+      "단순히 로그를 주기적으로 남기기 위한 모니터링 목적일 뿐 배포 전략과는 무관하다.",
+      "10초는 쿠버네티스가 강제하는 고정값이라 변경할 수 없다.",
+      "readinessProbe는 Service가 아니라 Ingress의 라우팅 여부만 결정한다."
+    ],
+    answer: 0,
+    explain: "스프링 서버가 완전히 뜨기까지 시간이 걸리므로, <code>/health</code> 요청에 정상 응답이 와야 <b>새 Pod가 준비됐다고 판단하고 그제서야 기존 Pod를 순차 종료</b>한다. 이게 없으면 아직 준비 안 된 Pod로 트래픽이 갈 수 있다."
+  },
+  {
+    topic: "Deployment",
+    q: "<code>revisionHistoryLimit</code>을 기본값(10)보다 낮게(예: 2) 설정하는 이유로 강의에서 든 근거는?",
+    opts: [
+      "리비전이 너무 많으면 클러스터 성능이 물리적으로 저하되기 때문이다.",
+      "낮은 값이 아니면 rollout restart 자체가 동작하지 않기 때문이다.",
+      "리비전(ReplicaSet)이 계속 쌓이는데, 나중에 쓸 Argo CD 같은 배포 UI가 리비전이 너무 많으면 지저분해지기 때문이다.",
+      "AWS 요금이 리비전 개수에 비례해 청구되기 때문이다."
+    ],
+    answer: 2,
+    explain: "수정·<code>rollout restart</code>할 때마다 ReplicaSet(리비전)이 계속 쌓이는데, 나중에 배포 현황을 보여주는 <b>Argo CD UI에서 리비전이 너무 많으면 관리가 번거로워지기 때문에</b> 제한을 걸어뒀다."
+  },
+  {
+    topic: "Deployment",
+    q: "이미지 태그를 <code>latest</code>로 고정해 둔 상태에서, 새 이미지를 다시 당겨와 파드를 갱신하고 싶을 때 쓰는 명령은?",
+    opts: [
+      "<code>kubectl delete deployment</code> 후 재생성",
+      "<code>kubectl rollout restart deployment &lt;name&gt; -n &lt;ns&gt;</code>",
+      "<code>kubectl edit deployment</code>로 아무 값이나 바꿨다가 되돌린다.",
+      "<code>kubectl scale --replicas=0</code> 후 다시 원래 수로 늘린다."
+    ],
+    answer: 1,
+    explain: "<code>template</code>에 변화가 없어도(이미지 태그가 <code>latest</code>로 그대로여도) <code>rollout restart</code>는 내부적으로 새 ReplicaSet을 만들어 <b>강제로 최신 이미지를 다시 당겨오게</b> 한다."
+  },
+  {
+    topic: "HTTPS",
+    q: "HTTPS 통신에서 <b>대칭키가 아니라 비대칭키</b> 방식을 쓰는 구조적인 이유는?",
+    opts: [
+      "대칭키는 속도가 너무 느려서 실무에서 전혀 쓰이지 않기 때문이다.",
+      "대칭키는 암복호화에 같은 키를 쓰므로, 불특정 다수 사용자에게 그 키를 나눠주면 모두가 서로의 데이터를 복호화할 수 있게 되어버리기 때문이다.",
+      "비대칭키가 국제 표준으로 법제화되어 있어서 선택의 여지가 없기 때문이다.",
+      "대칭키는 로그인 세션에만 쓰이고 데이터 암호화에는 쓰이지 않기 때문이다."
+    ],
+    answer: 1,
+    explain: "대칭키는 암호화·복호화에 <b>같은 키</b>를 쓰므로, 불특정 다수 사용자에게 그 키를 나눠줘야 하는 HTTPS 상황에서는 누구나 서로의 데이터를 복호화할 수 있게 되어 의미가 없어진다. 비대칭키는 공개키만 나눠주고 비밀키는 서버만 갖고 있어 안전하다."
+  },
+  {
+    topic: "HTTPS",
+    q: "TLS 인증서 발급 흐름의 순서로 옳은 것은?",
+    opts: [
+      "CA가 먼저 공개키/비밀키를 만들어 서버에 전달 → 서버가 CSR을 만든다.",
+      "서버가 공개키/비밀키 생성 → 공개키와 서버(도메인) 정보로 CSR 생성 → CA에 제출 → CA가 도메인 소유권 검증 후 서명해 인증서 발급.",
+      "사용자가 먼저 인증서를 만들어 서버에 제공한다.",
+      "인증서 발급에는 키 생성 단계가 필요 없고 도메인 등록만으로 자동 발급된다."
+    ],
+    answer: 1,
+    explain: "서버가 <b>공개키/비밀키를 생성</b> → 공개키와 도메인 정보로 <b>CSR(인증서 서명 요청)</b>을 만들어 CA에 제출 → CA가 <b>도메인 소유권을 검증</b>한 뒤 서명해 인증서를 발급하는 순서다."
+  },
+  {
+    topic: "HTTPS",
+    q: "<code>cert-manager</code>, <code>ClusterIssuer</code>, <code>Certificate</code> 세 자원의 역할 구분으로 옳은 것은?",
+    opts: [
+      "ClusterIssuer가 실질적으로 인증서를 발급하는 컨트롤러이고, cert-manager는 선언적 설정일 뿐이다.",
+      "ClusterIssuer는 어떤 CA·어떤 종류의 인증서를 쓸지 정의하고, Certificate는 도메인 정보를 담아 발급을 요청하며, cert-manager가 이 선언들을 보고 실제로 CA에 요청·발급·저장을 수행한다.",
+      "Certificate 자원 하나만 있으면 cert-manager와 ClusterIssuer 없이도 인증서가 자동 발급된다.",
+      "cert-manager는 Ingress Controller와 동일한 리소스다."
+    ],
+    answer: 1,
+    explain: "<b>ClusterIssuer</b>(CA 기관·인증서 종류 정의), <b>Certificate</b>(도메인 정보 담아 발급 요청)는 선언적 자원이고, 이 내용을 보고 실제로 CA에 요청해 인증서를 받아 Secret에 저장하는 <b>실질적인 작업은 cert-manager</b>가 수행한다."
+  },
+  {
+    topic: "HTTPS",
+    q: "<code>Certificate</code> 자원의 <code>Ready</code> 상태가 계속 <code>False</code>일 때, 강의에서 가장 먼저 의심하라고 한 원인은?",
+    opts: [
+      "ClusterIssuer의 이메일 주소를 잘못 입력한 경우가 거의 대부분이다.",
+      "CA가 도메인 소유권을 확인하려고 해당 도메인으로 HTTP 요청을 보내는데, Ingress 라우팅이 아직 제대로 안 돼 있어 그 요청을 못 받는 경우다.",
+      "Certificate 자원 이름과 Secret 이름이 같으면 항상 실패한다.",
+      "DNS 서버가 24시간 이상 다운되어 있는 경우 외에는 발생하지 않는다."
+    ],
+    answer: 1,
+    explain: "CA가 도메인 소유권을 검증하려고 해당 도메인으로 HTTP 요청을 보내는데, <b>Ingress를 통한 http 라우팅이 먼저 제대로 되어 있지 않으면</b> 이 요청을 받을 수 없어 발급이 계속 실패(Ready=False)한다. 그래서 인증서 작업 전에 http 라우팅부터 확인해야 한다."
+  },
+  {
+    topic: "CI/CD",
+    q: "GitHub Actions 워크플로우 스텝에서 <code>uses</code>와 <code>run</code>의 차이로 옳은 것은?",
+    opts: [
+      "<code>uses</code>는 내가 직접 실행할 명령어를 정의하고, <code>run</code>은 남이 만든 액션을 가져다 쓴다.",
+      "<code>uses</code>는 누군가 미리 만들어 둔 재사용 가능한 액션·프로그램을 가져다 쓰고, <code>run</code>은 내가 직접 실행할 명령어를 정의한다.",
+      "<code>uses</code>와 <code>run</code>은 완전히 동일하며 취향에 따라 선택한다.",
+      "<code>uses</code>는 job 단위, <code>run</code>은 workflow 단위에서만 쓸 수 있다."
+    ],
+    answer: 1,
+    explain: "<code>uses</code>는 checkout, kubectl 설치처럼 <b>누군가 미리 만들어 둔 재사용 액션</b>을 가져다 쓰는 것이고, <code>run</code>은 내가 <b>직접 실행할 명령어</b>(예: docker build/push)를 정의하는 것이다."
+  },
+  {
+    topic: "CI/CD",
+    q: "GitHub Actions에서 AWS Access Key/Secret Key를 소스코드에 노출하지 않고 사용하는 강의의 방식은?",
+    opts: [
+      "키 값을 Base64로 인코딩해 소스코드 주석에 남긴다.",
+      "GitHub Repository의 Settings > Secrets and variables에 키를 등록해두고, 워크플로우에서 <code>secrets.AWS_KEY</code> 같은 문법으로 참조한다.",
+      "키를 매번 워크플로우 실행 로그에 직접 출력해서 확인한다.",
+      "Public 레포에서는 키를 코드에 직접 적어도 안전하다고 설명했다."
+    ],
+    answer: 1,
+    explain: "GitHub 레포의 <b>Settings → Secrets and variables → Actions</b>에 값을 등록해두면 노출 없이 비밀스럽게 보관되고, 워크플로우에서는 <code>secrets.AWS_UNDERBAR_KEY</code>처럼 <b>secrets 키워드로 참조</b>만 한다."
+  },
+  {
+    topic: "CI/CD",
+    q: "GitHub Actions의 <b>workflow</b>, <b>event</b>, <b>job</b>, <b>runner</b> 관계로 옳은 것은?",
+    opts: [
+      "job이 event를 발생시키고, 그 event가 workflow를 만든다.",
+      "event(예: main 브랜치 push)가 workflow를 트리거하고, workflow 안의 job들이 runner(가상/물리 서버) 위에서 실행된다.",
+      "runner가 workflow를 정의하고, workflow가 event를 실행한다.",
+      "네 가지는 사실상 동의어이며 문법적으로만 다르다."
+    ],
+    answer: 1,
+    explain: "<b>event</b>(예: main 푸시)가 <b>workflow</b>를 트리거하고, workflow는 하나 이상의 <b>job</b>을 포함하며, 그 job은 개발자가 지정한 <b>runner</b>(예: Ubuntu 가상 PC) 위에서 실행된다."
+  },
+  {
+    topic: "CI/CD",
+    q: "GitHub Actions workflow 스크립트 파일의 위치·이름 규칙으로 옳은 것은?",
+    opts: [
+      "파일명이 반드시 <code>main.yml</code>이어야 GitHub이 인식한다.",
+      "<code>.github/workflows</code> 디렉토리 밑에 yaml 형식이면 되고, 파일명 자체는 중요하지 않다.",
+      "프로젝트 루트에 바로 두면 되고 별도 폴더 구조는 필요 없다.",
+      "workflow 파일은 반드시 <code>.json</code> 형식이어야 한다."
+    ],
+    answer: 1,
+    explain: "GitHub과 사전에 약속된 경로인 <code>.github/workflows</code> 밑에 있으면 자동으로 스캔되며, <b>파일명은 중요하지 않고</b> yaml 형식이기만 하면 된다."
+  },
+  {
+    topic: "인프라/CI-CD",
+    q: "다음 중 <b>일회성 작업</b>과 <b>반복 작업</b>의 구분으로 옳은 것은?",
+    opts: [
+      "RDS/Redis/ECR 생성과 이미지 빌드/push/rollout restart는 둘 다 매번 반복해야 하는 작업이다.",
+      "RDS/Redis/ECR 생성, Secret·Ingress 최초 생성은 일회성이고, 이미지 빌드/push/rollout restart는 소스코드가 바뀔 때마다 반복되는 작업이다.",
+      "이미지 빌드/push만 일회성이고 나머지는 전부 반복 작업이다.",
+      "쿠버네티스 자원은 전부 일회성이고 인프라 자원만 반복 작업이다."
+    ],
+    answer: 1,
+    explain: "인프라 사전 생성이나 Secret/Ingress 최초 생성은 <b>한 번만 해두면 되는 일회성 작업</b>이고, 소스코드 변경에 따른 <b>이미지 빌드/push/파드 재생성은 매우 빈번하게 반복</b>되는 작업이라 GitHub Actions로 자동화할 가치가 있다."
+  },
+  {
+    topic: "이미지 빌드",
+    q: "JWT 서명 키를 강의에서 Secret으로 감추지 않은 이유로 가장 적절한 것은?",
+    opts: [
+      "JWT는 원래 시크릿화가 기술적으로 불가능하기 때문이다.",
+      "이 서비스에는 실제 사용자 데이터가 없어서, 토큰이 위조당해도 실질적인 피해가 없다는 위험 기반 판단 때문이다.",
+      "JWT 키는 DB 자격증명보다 항상 덜 중요하기 때문이다.",
+      "GitHub Actions가 JWT 키의 시크릿화를 지원하지 않기 때문이다."
+    ],
+    answer: 1,
+    explain: "\"덜 중요해서\"가 아니라, <b>\"위조해도 실제 사용자 데이터가 없어 피해가 없다\"는 위험(risk) 기반 판단</b>이었다는 점이 핵심이다. 실사용자가 생기면 이 판단은 더 이상 유효하지 않다."
+  },
+  {
+    topic: "Deployment",
+    q: "<code>kubectl rollout restart</code> 실행 후 실제로 관찰되는 Pod 교체 순서로 옳은 것은?",
+    opts: [
+      "기존 Pod를 먼저 전부 종료한 뒤에 새 Pod를 하나씩 띄운다.",
+      "새 Pod가 먼저 뜨고, readinessProbe가 Ready로 판단한 뒤에야 기존 Pod가 순차적으로 Terminating된다.",
+      "기존 Pod와 새 Pod가 항상 동시에 정확히 같은 타이밍에 교체된다.",
+      "Pod 교체 순서는 무작위이며 예측할 수 없다."
+    ],
+    answer: 1,
+    explain: "롤링 업데이트는 <b>새 Pod를 먼저 띄우고, readinessProbe로 준비 완료가 확인된 뒤에야 기존 Pod를 순차적으로 종료(Terminating)</b>한다. 그래서 <code>kubectl get pods</code>를 빠르게 반복 조회하면 새 Pod는 Running, 기존 Pod는 Terminating으로 잠깐 공존하는 모습을 볼 수 있다."
+  }
+];
+
+const quizEl = document.getElementById('quiz');
+const answers = new Array(QUESTIONS.length).fill(null);
+
+QUESTIONS.forEach((item, qi) => {
+  const card = document.createElement('div');
+  card.className = 'q';
+  card.id = 'q' + qi;
+  const optsHtml = item.opts.map((o, oi) => `
+    <label class="opt" data-q="${qi}" data-o="${oi}">
+      <input type="radio" name="q${qi}" value="${oi}">
+      <span class="otext">${o}</span>
+    </label>`).join('');
+  card.innerHTML = `
+    <div class="qhead">
+      <span class="num">Q${qi + 1}</span>
+      <div>
+        <div class="topic">${item.topic}</div>
+        <div class="qtext">${item.q}</div>
+      </div>
+    </div>
+    <div class="opts">${optsHtml}</div>
+    <div class="explain" id="ex${qi}"></div>`;
+  quizEl.appendChild(card);
+});
+
+function updateCounter() {
+  const done = answers.filter(a => a !== null).length;
+  document.getElementById('counter').textContent = `${done} / ${QUESTIONS.length} 선택됨`;
+  document.getElementById('progress').style.width = (done / QUESTIONS.length * 100) + '%';
+}
+
+quizEl.addEventListener('change', (e) => {
+  if (e.target.matches('input[type=radio]')) {
+    const qi = +e.target.closest('.opt').dataset.q;
+    answers[qi] = +e.target.value;
+    updateCounter();
+  }
+});
+
+document.getElementById('resetBtn').addEventListener('click', resetAll);
+function resetAll() {
+  answers.fill(null);
+  document.querySelectorAll('input[type=radio]').forEach(r => r.checked = false);
+  document.querySelectorAll('.opt').forEach(o => o.classList.remove('correct', 'wrong'));
+  document.querySelectorAll('.explain').forEach(e => e.classList.remove('show'));
+  updateCounter();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+document.getElementById('submitBtn').addEventListener('click', () => {
+  const unanswered = answers.filter(a => a === null).length;
+  if (unanswered > 0 && !confirm(`아직 ${unanswered}문항을 안 풀었습니다. 그래도 채점할까요?`)) return;
+
+  let score = 0;
+  let breakdown = '';
+  QUESTIONS.forEach((item, qi) => {
+    const chosen = answers[qi];
+    const correct = item.answer;
+    const labels = document.querySelectorAll(`#q${qi} .opt`);
+    labels.forEach((lab, oi) => {
+      lab.classList.remove('correct', 'wrong');
+      if (oi === correct) lab.classList.add('correct');
+      if (oi === chosen && chosen !== correct) lab.classList.add('wrong');
+    });
+    const ex = document.getElementById('ex' + qi);
+    ex.innerHTML = `<b>정답: ${correct + 1}번.</b> ${item.explain}`;
+    ex.classList.add('show');
+    const ok = chosen === correct;
+    if (ok) score++;
+    breakdown += `<div class="${ok ? 'b-ok' : 'b-bad'}">${ok ? '✔' : '✗'} Q${qi + 1} (${item.topic})${chosen === null ? ' · 미응답' : ''}</div>`;
+  });
+
+  const pct = Math.round(score / QUESTIONS.length * 100);
+  let grade, emoji;
+  if (pct >= 90) { grade = '완벽에 가깝습니다'; emoji = '🏆'; }
+  else if (pct >= 75) { grade = '실무 감각 양호'; emoji = '💪'; }
+  else if (pct >= 60) { grade = '핵심은 잡았습니다'; emoji = '📚'; }
+  else { grade = '복습이 필요합니다'; emoji = '🔧'; }
+
+  document.getElementById('grade').textContent = emoji + ' ' + grade;
+  document.getElementById('scoreRing').textContent = score + ' / ' + QUESTIONS.length;
+  document.getElementById('scoreSub').textContent = `정답률 ${pct}%`;
+  document.getElementById('breakdown').innerHTML = breakdown;
+  document.getElementById('overlay').classList.add('show');
+});
+
+document.getElementById('reviewBtn').addEventListener('click', () => {
+  document.getElementById('overlay').classList.remove('show');
+});
+document.getElementById('retryBtn').addEventListener('click', () => {
+  document.getElementById('overlay').classList.remove('show');
+  resetAll();
+});
+document.getElementById('overlay').addEventListener('click', (e) => {
+  if (e.target.id === 'overlay') document.getElementById('overlay').classList.remove('show');
+});
+
+updateCounter();
+</script>
+</body>
+</html>
