@@ -1,0 +1,65 @@
+name: deploy ordersystem-backend
+
+# 이벤트(event) : order-system 브랜치에 push/merge 되면 아래 jobs 실행
+on:
+  push:
+    branches:
+      - order-system
+
+jobs:
+  build-and-deploy:
+    # 러너(runner) : GitHub이 빌려주는 가상 PC. 여기서 모든 스텝이 실행된다.
+    runs-on: ubuntu-latest
+    steps:
+      # 1. 소스코드 체크아웃 (가상 PC는 매번 새로 만들어지므로 매번 필요)
+      - name: checkout github
+        uses: actions/checkout@v4
+
+      # 2. kubectl 설치 (rollout restart 명령을 쓰기 위해)
+      #    클러스터 버전(eks-practice = 1.36)과 맞춰 둔다.
+      - name: install kubectl
+        uses: azure/setup-kubectl@v4
+        with:
+          version: "v1.36.0"
+        id: install
+
+      # 3. AWS CLI 설치 + configure (액세스 키/시크릿은 반드시 GitHub Secrets로)
+      #    Settings > Secrets and variables > Actions 에 AWS_KEY / AWS_SECRET 등록 필요
+      - name: configure aws
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_KEY }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET }}
+          aws-region: ap-northeast-2
+
+      # 4. kubectl이 어느 클러스터를 바라볼지 세팅
+      - name: update cluster information
+        run: aws eks update-kubeconfig --name eks-practice --region ap-northeast-2
+
+      # 5. ECR 로그인 (ECR은 별도 로그인이 필요)
+      - name: Login to ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      # 6. 이미지 빌드 & 푸시
+      #    워크플로우의 현재 위치는 항상 프로젝트 루트이므로
+      #    -f 로 Dockerfile 위치를, 뒤에 빌드 컨텍스트를 반드시 명시해야 한다.
+      #    러너는 amd64라서 로컬(Apple Silicon)과 달리 --platform 옵션이 필요 없다.
+      - name: build and push docker image to ecr
+        env:
+          REGISTRY: 831926604059.dkr.ecr.ap-northeast-2.amazonaws.com
+          REPOSITORY: ordersystem-backend
+          IMAGE_TAG: latest
+        run: |
+          docker build \
+          -t $REGISTRY/$REPOSITORY:$IMAGE_TAG \
+          -f ./2.ordersystem/Dockerfile ./2.ordersystem
+          docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
+
+      # 7. 파드 재생성 (ECR에 올라간 latest 이미지를 다시 당겨온다)
+      #    deployment 이름과 namespace는 depl_svc.yml과 일치해야 한다.
+      - name: eks kubectl apply
+        run: |
+          kubectl rollout restart deployment ordersystem-backend -n mj-eks
+        # depl_svc.yml을 자주 수정한다면 아래 주석을 풀어 함께 적용
+        # kubectl apply -f ./2.ordersystem/k8s/k8s-ordersystem/depl_svc.yml
