@@ -5,18 +5,18 @@ apiVersion: autoscaling/v1
 kind: HorizontalPodAutoscaler
 metadata:
   name: ordersystem-backend-hpa
-  namespace: bradkim
+  namespace: mj-eks
 spec: 
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
     name: ordersystem-backend
   minReplicas: 2
-  maxReplicas: 10
-  targetCPUUtilizationPercentage: 30
+  maxReplicas: 4
+  targetCPUUtilizationPercentage: 70
 
 # 메트릭 서버와 HPA를 통한 pod 현황 조회
-# kubectl get hpa ordersystem-backend-hpa -n bradkim -w
+# kubectl get hpa ordersystem-backend-hpa -n mj-eks -w
 
 # 부하 간단 테스트
 # 특정 pod에 접속
