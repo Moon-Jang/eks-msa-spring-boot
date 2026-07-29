@@ -6,13 +6,13 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/kimseonguk197/k8s_inflearn.git
+    repoURL: https://github.com/Moon-Jang/eks-msa-spring-boot.git
     targetRevision: main
     path: 2.ordersystem/k8s/k8s-ordersystem
   destination:
   # https://kubernetes.default.svc: 이는 Argo CD 자체가 설치된 클러스터의 내부 주소
     server: https://kubernetes.default.svc
-    namespace: bradkim
+    namespace: mj-eks
   syncPolicy:
   # Argo CD가 사람이 명령 안 해도 자동으로 GitHub에 있는 매니페스트를 클러스터에 적용
     automated:
