@@ -9,9 +9,20 @@ spring :
   datasource:
     driver-class-name: org.postgresql.Driver
     # DB_HOST, DB_USERNAME, DB_PW는 k8s의 Secret 내의 Key이름과 일치
-    url: jdbc:postgresql://${DB_HOST}:15210/defaultdb?ssl=require
+    # defaultdb = 데이터베이스, ordersystem = 그 안의 스키마 (PostgreSQL은 둘이 다른 개념)
+    # 스키마명에 하이픈을 쓰면 식별자로 쓸 때마다 큰따옴표가 필요해지므로 하이픈 없이 짓는다.
+    url: jdbc:postgresql://${DB_HOST}:15210/defaultdb?ssl=require&currentSchema=ordersystem
     username: ${DB_USERNAME}
     password: ${DB_PW}
+    # 외부 관리형 DB(Aiven 무료 플랜)는 전체 커넥션 한도가 20개 수준이다.
+    # 파드당 기본 10개(HikariCP 기본값)를 열면 레플리카 2개만으로 20개를 채우고,
+    # 롤링 업데이트 중에는 구 파드 2 + 신 파드 1 = 30개가 되어 한도를 넘긴다.
+    # 그러면 신 파드는 커넥션이 없어 못 뜨고 구 파드는 안 내려가는 교착이 발생한다.
+    # 실습 환경은 트래픽이 없으므로 파드당 2개면 충분하다.
+    # (2파드=4, 롤링 업데이트 서지 포함해도 6개)
+    hikari:
+      maximum-pool-size: 2
+      minimum-idle: 1
   jpa:
     database: postgresql
     database-platform: org.hibernate.dialect.PostgreSQLDialect
