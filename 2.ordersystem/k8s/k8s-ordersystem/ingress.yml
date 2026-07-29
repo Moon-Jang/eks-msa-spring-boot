@@ -7,18 +7,18 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: order-backend-ingress
-  namespace: bradkim
+  namespace: mj-eks
   annotations:
     kubernetes.io/ingress.class: nginx
     cert-manager.io/cluster-issuer: my-issuer
 spec:
   tls:
   - hosts:
-    - "server.bradkim197.shop"
+    - "server.balance-eat.com"
     # https설정시에 TLS 인증서가 저장된 certificate의 Secret의 이름(spec.secretName)을 지정
-    secretName: server-bradkim197-com-tls
+    secretName: server-balance-eat-com-tls
   rules:
-  - host: server.bradkim197.shop 
+  - host: server.balance-eat.com
     http:
       paths:
       - path: / #모든 url요청을 service로 라우팅
