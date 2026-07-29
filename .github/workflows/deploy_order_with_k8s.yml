@@ -24,12 +24,13 @@ jobs:
         id: install
 
       # 3. AWS CLI 설치 + configure (액세스 키/시크릿은 반드시 GitHub Secrets로)
-      #    Settings > Secrets and variables > Actions 에 AWS_KEY / AWS_SECRET 등록 필요
+      #    Settings > Secrets and variables > Actions 에 아래 두 개 등록 필요
+      #    AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY (IAM 사용자 eks-practice)
       - name: configure aws
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id: ${{ secrets.AWS_KEY }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ap-northeast-2
 
       # 4. kubectl이 어느 클러스터를 바라볼지 세팅
@@ -63,3 +64,23 @@ jobs:
           kubectl rollout restart deployment ordersystem-backend -n mj-eks
         # depl_svc.yml을 자주 수정한다면 아래 주석을 풀어 함께 적용
         # kubectl apply -f ./2.ordersystem/k8s/k8s-ordersystem/depl_svc.yml
+
+      # 8. 배포 검증
+      #    이 스텝이 없으면 파드가 기동에 실패해도 워크플로우는 초록불로 끝난다.
+      #    rollout restart는 "재시작을 지시"까지만 하고 결과를 기다리지 않기 때문이다.
+      - name: verify rollout
+        run: |
+          kubectl rollout status deployment/ordersystem-backend -n mj-eks --timeout=300s
+          kubectl get pods -n mj-eks -l app=ordersystem-backend
+
+      # 9. 실패했을 때 원인 파악용 정보를 로그에 남긴다.
+      #    (파드 상태 / 최근 이벤트 / 컨테이너 로그)
+      - name: dump diagnostics on failure
+        if: failure()
+        run: |
+          echo "=== pods ==="
+          kubectl get pods -n mj-eks -l app=ordersystem-backend || true
+          echo "=== events ==="
+          kubectl get events -n mj-eks --sort-by=.lastTimestamp | tail -20 || true
+          echo "=== logs ==="
+          kubectl logs -n mj-eks -l app=ordersystem-backend --tail=50 --all-containers || true
